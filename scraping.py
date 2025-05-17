@@ -48,7 +48,7 @@ def getShootingStats(team_urls, year, all_matches):
         # separating our requests so that we don't flood the website
         time.sleep(1)
 
-        return all_matches
+    return all_matches
 
 def getStats():
     years = np.arange(END_YEAR, START_YEAR, -1)
