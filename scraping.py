@@ -1,16 +1,24 @@
-import requests
 from selenium import webdriver
 from bs4 import BeautifulSoup
 import time
 import pandas as pd
 from io import StringIO
 import numpy as np
+from datetime import datetime
 
 # setting up chrome driver to load js
 driver = webdriver.Chrome()
 
-START_YEAR = 2022
-END_YEAR = 2025
+def get_current_year():
+    current_date = datetime.now()
+    current_year = current_date.year
+    return current_year
+
+# Total number of years of data wanted
+YEAR_DIFF = 3
+
+end_year = get_current_year()
+start_year = end_year - YEAR_DIFF
 
 def getShootingStats(team_urls, year, all_matches):
     for team_url in team_urls:
@@ -51,7 +59,7 @@ def getShootingStats(team_urls, year, all_matches):
     return all_matches
 
 def getStats():
-    years = np.arange(END_YEAR, START_YEAR, -1)
+    years = np.arange(end_year, start_year, -1)
     all_matches = []
     
     # URL of the webpage that we are scraping the data from
