@@ -74,6 +74,7 @@ def make_request(url, params, num_retries=5, delay=1):
 # time.sleep(SLEEP_SECS)
 
 # seasons_standings_string = ""
+# teams = dict()
 
 # # getting the league standings of the seasons wanted
 # for season in seasons:
@@ -83,20 +84,25 @@ def make_request(url, params, num_retries=5, delay=1):
 #         # "season_id": season["season_id"]
 #     }
 
-#     response = make_requests(url, params)
+#     response = make_request(url, params)
 #     # getting all seasons of the league
 #     print(response.headers)
 #     standings = response.json()["standings"]
+#     teams[standings["team_name"]] = standings["team_id"]
 #     seasons_standings_string += standings
 
 # print(seasons_standings_string)
 
-url = "https://fbrapi.com/league-standings"
-params = {
-    "league_id": 9
-}
-headers = {"X-API-Key": api_key}
+# for team, team_id in teams.items():
+#     url = "https://fbrapi.com/teams"
+#     params = {
+#         "league_id": 9,
+#         "season_id": 
+#     }
+#     headers = {"X-API-Key": api_key}
 
-response = requests.get(url, params=params, headers=headers)
-# getting all seasons of the league
-print(response.text)
+#     response = requests.get(url, params=params, headers=headers)
+#     # getting all seasons of the league
+#     print(response.text)
+    
+

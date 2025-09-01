@@ -5,6 +5,7 @@ import pandas as pd
 from io import StringIO
 import numpy as np
 from datetime import datetime
+import re
 
 # setting up chrome driver to load js
 driver = webdriver.Chrome()
@@ -15,7 +16,7 @@ def get_current_year():
     return current_year
 
 # Total number of years of data wanted
-YEAR_DIFF = 3
+YEAR_DIFF = 4
 
 end_year = get_current_year()
 start_year = end_year - YEAR_DIFF
@@ -73,6 +74,11 @@ def getStats():
 
         # using BeautifulSoup to parse the data
         soup = BeautifulSoup(page_source, features='html.parser')
+
+        # getting the ending year of the season
+        title = soup.select('h1')[0]
+        title_match = re.search(r'([0-9]{4})-([0-9]{4})', str(title))
+        year = title_match.group(2)
 
         # selecting the table using css selector
         standings_table = soup.select('table.stats_table')[0]
