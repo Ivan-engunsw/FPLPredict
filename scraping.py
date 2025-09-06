@@ -5,6 +5,10 @@
 # On: 2025/09/02
 #-------------------------------------------------------------------------------
 from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 from bs4 import BeautifulSoup
 import time
 import pandas as pd
@@ -41,11 +45,20 @@ def get_matches_stats(team_urls, year, all_matches, next_matches,
         team_url = re.sub(r'(/[^/]+)$',r'/all_comps\1-All-Competitions', team_url)
         # reading each team
         driver.get(team_url)
-        time.sleep(3)
+        # wait until table exists in DOM
+        try:
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located((By.ID, "matchlogs_for"))
+            )
+        except TimeoutException:
+                print(team_url)
+        time.sleep(2)
         page_source = driver.page_source
 
         # converting to pandas dataframe
         matches = pd.read_html(StringIO(page_source), match='Scores & Fixtures')[0]
+        matches['Season'] = year
+        matches['Team'] = team_name
         past_matches = matches[matches['Result'].notna()]
         next_match = matches[matches['Result'].isna()]
         
@@ -72,7 +85,14 @@ def get_matches_stats(team_urls, year, all_matches, next_matches,
             head_to_head_urls.add(head_to_head_history_url)
             
             driver.get(head_to_head_history_url)
-            time.sleep(3)
+            # wait until table exists in DOM
+            try:
+                WebDriverWait(driver, 20).until(
+                    EC.presence_of_element_located((By.ID, "games_history_all"))
+                )
+            except TimeoutException:
+                print(head_to_head_history_url)
+            time.sleep(2)
             page_source = driver.page_source
             try:
                 hth_matches = pd.read_html(StringIO(page_source), match='Head-to-Head Matches')[0]
@@ -80,6 +100,7 @@ def get_matches_stats(team_urls, year, all_matches, next_matches,
                 hth_matches = hth_matches[hth_matches['Score'].notna()]
                 # only keeping rows with data and not labels
                 hth_matches = hth_matches[hth_matches['Date'] != 'Date']
+                hth_matches['Team'] = team_name
                 history_matches.append(hth_matches)
             except ValueError:
                 print(head_to_head_history_url)
@@ -88,21 +109,42 @@ def get_matches_stats(team_urls, year, all_matches, next_matches,
         # getting the shooting stats
         shooting_links = [l for l in links if l and 'all_comps/shooting/' in l]
         driver.get(f'https://fbref.com{shooting_links[0]}')
-        time.sleep(3)
+        # wait until table exists in DOM
+        try:
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located((By.ID, "matchlogs_for"))
+            )
+        except TimeoutException:
+            print(f'https://fbref.com{shooting_links[0]}')
+        time.sleep(2)
         page_source = driver.page_source
         shooting = pd.read_html(StringIO(page_source), match='Shooting')[0]
 
         # getting the miscellaneous stats
         misc_links = [l for l in links if l and 'all_comps/misc/' in l]
         driver.get(f'https://fbref.com{misc_links[0]}')
-        time.sleep(3)
+        # wait until table exists in DOM
+        try:
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located((By.ID, "matchlogs_for"))
+            )
+        except TimeoutException:
+            print(f'https://fbref.com{misc_links[0]}')
+        time.sleep(2)
         page_source = driver.page_source
         misc = pd.read_html(StringIO(page_source), match='Miscellaneous Stats')[0]
 
         # getting the goal and shot creation stats
         gca_links = [l for l in links if l and 'all_comps/gca/' in l]
         driver.get(f'https://fbref.com{gca_links[0]}')
-        time.sleep(3)
+        # wait until table exists in DOM
+        try:
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located((By.ID, "matchlogs_for"))
+            )
+        except TimeoutException:
+            print(f'https://fbref.com{gca_links[0]}')
+        time.sleep(2)
         page_source = driver.page_source
         gca = pd.read_html(StringIO(page_source), match='Goal and Shot Creation')[0]
 
@@ -127,11 +169,9 @@ def get_matches_stats(team_urls, year, all_matches, next_matches,
 
         # only keeping rows with data and not labels
         team_data = team_data[team_data['Date'] != 'Date']
-        team_data['Season'] = year
-        team_data['Team'] = team_name
         all_matches.append(team_data)
         if (not next_match.empty):
-            next_matches.append(next_match)
+            next_matches.append(pd.concat(next_match.iloc[0]))
 
         # separating our requests so that we don't flood the website
         time.sleep(1)
@@ -156,7 +196,11 @@ def get_stats(current_data_year=0):
     for year in years:
         # getting the data from the url
         driver.get(info_url)
-        time.sleep(3)
+        # wait until table exists in DOM
+        WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "stats_table"))
+        )
+        time.sleep(2)
         page_source = driver.page_source
 
         # using BeautifulSoup to parse the data
