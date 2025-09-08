@@ -33,6 +33,23 @@ MATCHES_CSV_FILE = 'matches.csv'
 HISTORY_CSV_FILE = 'history.csv'
 NEXT_MATCHES_CSV_FILE = 'next_matches.csv'
 
+def read_data_with_retry(url, id_match, table_match, retries=3, delay=2):
+    for attempt in range(retries):
+        # getting the data from the url
+        driver.get(url)
+        # wait until table exists in DOM
+        try:
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located((By.ID, id_match))
+            )
+            page_source = driver.page_source
+            time.sleep(2)
+            return (pd.read_html(StringIO(page_source), match=table_match)[0], page_source)
+        except TimeoutException:
+            if attempt < retries - 1:
+                time.sleep(delay)
+            else:
+                print(url)
 
 def get_matches_stats(team_urls, year, all_matches, next_matches,
                       history_matches, head_to_head_urls):
@@ -43,20 +60,9 @@ def get_matches_stats(team_urls, year, all_matches, next_matches,
         team_id = team_id_match.group(0).split('/')[-1]
         # getting all competition stats for the team instead of just its league
         team_url = re.sub(r'(/[^/]+)$',r'/all_comps\1-All-Competitions', team_url)
-        # reading each team
-        driver.get(team_url)
-        # wait until table exists in DOM
-        try:
-            WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.ID, "matchlogs_for"))
-            )
-        except TimeoutException:
-                print(team_url)
-        time.sleep(2)
-        page_source = driver.page_source
 
         # converting to pandas dataframe
-        matches = pd.read_html(StringIO(page_source), match='Scores & Fixtures')[0]
+        (matches, page_source) = read_data_with_retry(team_url, 'matchlogs_for', table_match='Scores & Fixtures')
         matches['Season'] = year
         matches['Team'] = team_name
         past_matches = matches[matches['Result'].notna()]
@@ -84,18 +90,10 @@ def get_matches_stats(team_urls, year, all_matches, next_matches,
                 continue
             head_to_head_urls.add(head_to_head_history_url)
             
-            driver.get(head_to_head_history_url)
-            # wait until table exists in DOM
             try:
-                WebDriverWait(driver, 20).until(
-                    EC.presence_of_element_located((By.ID, "games_history_all"))
-                )
-            except TimeoutException:
-                print(head_to_head_history_url)
-            time.sleep(2)
-            page_source = driver.page_source
-            try:
-                hth_matches = pd.read_html(StringIO(page_source), match='Head-to-Head Matches')[0]
+                (hth_matches, page_source) = read_data_with_retry(head_to_head_history_url, 
+                                                   'games_history_all',
+                                                   table_match='Head-to-Head Matches')
                 # only reading matches that have already happened
                 hth_matches = hth_matches[hth_matches['Score'].notna()]
                 # only keeping rows with data and not labels
@@ -108,45 +106,21 @@ def get_matches_stats(team_urls, year, all_matches, next_matches,
 
         # getting the shooting stats
         shooting_links = [l for l in links if l and 'all_comps/shooting/' in l]
-        driver.get(f'https://fbref.com{shooting_links[0]}')
-        # wait until table exists in DOM
-        try:
-            WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.ID, "matchlogs_for"))
-            )
-        except TimeoutException:
-            print(f'https://fbref.com{shooting_links[0]}')
-        time.sleep(2)
-        page_source = driver.page_source
-        shooting = pd.read_html(StringIO(page_source), match='Shooting')[0]
+        (shooting, page_source) = read_data_with_retry(f'https://fbref.com{shooting_links[0]}',
+                                        'matchlogs_for',
+                                        table_match='Shooting')
 
         # getting the miscellaneous stats
         misc_links = [l for l in links if l and 'all_comps/misc/' in l]
-        driver.get(f'https://fbref.com{misc_links[0]}')
-        # wait until table exists in DOM
-        try:
-            WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.ID, "matchlogs_for"))
-            )
-        except TimeoutException:
-            print(f'https://fbref.com{misc_links[0]}')
-        time.sleep(2)
-        page_source = driver.page_source
-        misc = pd.read_html(StringIO(page_source), match='Miscellaneous Stats')[0]
+        (misc, page_source) = read_data_with_retry(f'https://fbref.com{misc_links[0]}',
+                                    'matchlogs_for',
+                                    table_match='Miscellaneous Stats')
 
         # getting the goal and shot creation stats
         gca_links = [l for l in links if l and 'all_comps/gca/' in l]
-        driver.get(f'https://fbref.com{gca_links[0]}')
-        # wait until table exists in DOM
-        try:
-            WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.ID, "matchlogs_for"))
-            )
-        except TimeoutException:
-            print(f'https://fbref.com{gca_links[0]}')
-        time.sleep(2)
-        page_source = driver.page_source
-        gca = pd.read_html(StringIO(page_source), match='Goal and Shot Creation')[0]
+        (gca, page_source) = read_data_with_retry(f'https://fbref.com{gca_links[0]}',
+                                    'matchlogs_for',
+                                    table_match='Goal and Shot Creation')
 
         # dropping the first level of column labels
         shooting.columns = shooting.columns.droplevel()
@@ -171,7 +145,7 @@ def get_matches_stats(team_urls, year, all_matches, next_matches,
         team_data = team_data[team_data['Date'] != 'Date']
         all_matches.append(team_data)
         if (not next_match.empty):
-            next_matches.append(pd.concat(next_match.iloc[0]))
+            next_matches.append(pd.DataFrame([next_match.iloc[0]]))
 
         # separating our requests so that we don't flood the website
         time.sleep(1)
@@ -194,14 +168,23 @@ def get_stats(current_data_year=0):
     # URL of the webpage that we are scraping the data from
     info_url = 'https://fbref.com/en/comps/9/Premier-League-Stats'
     for year in years:
-        # getting the data from the url
-        driver.get(info_url)
-        # wait until table exists in DOM
-        WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "stats_table"))
-        )
-        time.sleep(2)
-        page_source = driver.page_source
+        retries = 3
+        for attempt in range(retries):
+            # getting the data from the url
+            driver.get(info_url)
+            # wait until table exists in DOM
+            try:
+                WebDriverWait(driver, 20).until(
+                    EC.presence_of_element_located((By.CLASS_NAME, "stats_table"))
+                )
+                time.sleep(2)
+                page_source = driver.page_source
+                break
+            except TimeoutException:
+                if attempt < retries - 1:
+                    time.sleep(2)
+                else:
+                    print(info_url)
 
         # using BeautifulSoup to parse the data
         soup = BeautifulSoup(page_source, features='html.parser')
@@ -247,23 +230,23 @@ if (os.path.exists(matches_csv_path) and os.path.exists(next_matches_csv_path)
         csv_all_matches = pd.read_csv(MATCHES_CSV_FILE, index_col=0).sort_values('Date', ascending=False)
         current_data_year = csv_all_matches.iloc[0]['Season']
         (new_matches, next_new_matches, history_new_matches) = get_stats(current_data_year)
-        new_matches = pd.concat(new_matches)
-        next_new_matches = pd.concat(next_new_matches)
-        history_new_matches = pd.concat(history_new_matches)
+        new_matches = pd.concat(new_matches, ignore_index=True)
+        next_new_matches = pd.concat(next_new_matches, ignore_index=True)
+        history_new_matches = pd.concat(history_new_matches, ignore_index=True)
 
         # only adding the matches that are not already in the csv file
         unique_keys = ['Date', 'Team', 'Opponent']
         mask = ~new_matches.set_index(unique_keys).index.isin(csv_all_matches.set_index(unique_keys).index)
         new_unique_matches = new_matches[mask]
 
-        match_df = pd.concat([new_unique_matches, csv_all_matches])
+        match_df = pd.concat([new_unique_matches, csv_all_matches], ignore_index=True)
 
         # reading in the next matches data in the csv and adding new data
         csv_next_matches = pd.read_csv(NEXT_MATCHES_CSV_FILE, index_col=0).sort_values('Date', ascending=False)
         next_mask = ~next_new_matches.set_index(unique_keys).index.isin(csv_next_matches.set_index(unique_keys).index)
         next_new_unique_matches = next_new_matches[next_mask]
 
-        next_matches_df = pd.concat([next_new_unique_matches, csv_next_matches])
+        next_matches_df = pd.concat([next_new_unique_matches, csv_next_matches], ignore_index=True)
 
         # reading in the head-to-head matches data in the csv and adding new data
         csv_history_matches = pd.read_csv(HISTORY_CSV_FILE, index_col=0).sort_values('Date', ascending=False)
@@ -279,17 +262,17 @@ if (os.path.exists(matches_csv_path) and os.path.exists(next_matches_csv_path)
         history_mask = ~history_new_matches.set_index(unique_keys).index.isin(csv_history_matches.set_index(unique_keys).index)
         history_new_unique_matches = history_new_matches[history_mask]
 
-        history_matches_df = pd.concat([history_new_unique_matches, csv_history_matches])
+        history_matches_df = pd.concat([history_new_unique_matches, csv_history_matches], ignore_index=True)
     except pd.errors.EmptyDataError:
         (new_matches, next_new_matches, history_new_matches) = get_stats()
-        match_df = pd.concat(new_matches)
-        next_matches_df = pd.concat(next_new_matches)
-        history_matches_df = pd.concat(history_new_matches)
+        match_df = pd.concat(new_matches, ignore_index=True)
+        next_matches_df = pd.concat(next_new_matches, ignore_index=True)
+        history_matches_df = pd.concat(history_new_matches, ignore_index=True)
 else:
     (new_matches, next_new_matches, history_new_matches) = get_stats()
-    match_df = pd.concat(new_matches)
-    next_matches_df = pd.concat(next_new_matches)
-    history_matches_df = pd.concat(history_new_matches)
+    match_df = pd.concat(new_matches, ignore_index=True)
+    next_matches_df = pd.concat(next_new_matches, ignore_index=True)
+    history_matches_df = pd.concat(history_new_matches, ignore_index=True)
 
 # converting data into csv
 match_df.to_csv(MATCHES_CSV_FILE)
