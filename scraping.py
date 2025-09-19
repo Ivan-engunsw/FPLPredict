@@ -25,6 +25,7 @@ def get_current_year():
     current_year = current_date.year
     return current_year
 
+LEAGUE = 'Premier League'
 # Total number of years of data wanted
 YEAR_DIFF = 4
 
@@ -54,8 +55,8 @@ def read_data_with_retry(url, id_match, table_match, retries=3, delay=2):
 def get_matches_stats(team_urls, year, all_matches, next_matches,
                       history_matches, head_to_head_urls):
     for team_url in team_urls:
-        team_name_with_dash = team_url.split('/')[-1].replace("-Stats", "")
-        team_name = team_name_with_dash.replace("-", " ")
+        team_name_with_dash = team_url.split('/')[-1].replace('-Stats', '')
+        team_name = team_name_with_dash.replace('-', ' ')
         team_id_match = re.search('/squads/[^/]+', team_url)
         team_id = team_id_match.group(0).split('/')[-1]
         # getting all competition stats for the team instead of just its league
@@ -73,12 +74,19 @@ def get_matches_stats(team_urls, year, all_matches, next_matches,
         a_tags = soup.find_all('a')
         links = [a.get('href') for a in a_tags]
 
+        past_week_matches_csv_path = os.path.join(os.getcwd(), NEXT_MATCHES_CSV_FILE)
+        if os.path.exists(past_week_matches_csv_path):
+            past_week_matches_df = pd.read_csv(NEXT_MATCHES_CSV_FILE, index_col=0)
+            past_week_teams = set(list(past_week_matches_df['Team']))
+        else:
+            past_week_teams = set()
+
         # getting all the td tags with opponents to get the history matches data
         td_tags = set(soup.find_all('td', {'class': 'left', 'data-stat': 'opponent'}))
         for td in td_tags:
             # getting the links and all the info required for the history url
             link = td.find('a').get('href')
-            opp_name = link.split('/')[-1].replace("-Stats", "")
+            opp_name = link.split('/')[-1].replace('-Stats', '')
             opp_id_match = re.search('/squads/[^/]+', link)
             opp_id = opp_id_match.group(0).split('/')[-1]
             head_to_head_history_url = ('https://fbref.com/en/stathead/matchup/' + 
@@ -90,19 +98,21 @@ def get_matches_stats(team_urls, year, all_matches, next_matches,
                 continue
             head_to_head_urls.add(head_to_head_history_url)
             
-            try:
-                (hth_matches, page_source) = read_data_with_retry(head_to_head_history_url, 
-                                                   'games_history_all',
-                                                   table_match='Head-to-Head Matches')
-                # only reading matches that have already happened
-                hth_matches = hth_matches[hth_matches['Score'].notna()]
-                # only keeping rows with data and not labels
-                hth_matches = hth_matches[hth_matches['Date'] != 'Date']
-                hth_matches['Team'] = team_name
-                history_matches.append(hth_matches)
-            except ValueError:
-                print(head_to_head_history_url)
-                continue
+            if (past_week_teams and team_name in past_week_teams
+                and opp_name.replace('-',' ') in past_week_teams):
+                try:
+                    (hth_matches, page_source) = read_data_with_retry(head_to_head_history_url, 
+                                                    'games_history_all',
+                                                    table_match='Head-to-Head Matches')
+                    # only reading matches that have already happened
+                    hth_matches = hth_matches[hth_matches['Score'].notna()]
+                    # only keeping rows with data and not labels
+                    hth_matches = hth_matches[hth_matches['Date'] != 'Date']
+                    hth_matches['Team'] = team_name
+                    history_matches.append(hth_matches)
+                except ValueError:
+                    print(head_to_head_history_url)
+                    continue
 
         # getting the shooting stats
         shooting_links = [l for l in links if l and 'all_comps/shooting/' in l]
@@ -145,6 +155,7 @@ def get_matches_stats(team_urls, year, all_matches, next_matches,
         team_data = team_data[team_data['Date'] != 'Date']
         all_matches.append(team_data)
         if (not next_match.empty):
+            next_match = next_match[next_match['Comp'] == LEAGUE]
             next_matches.append(pd.DataFrame([next_match.iloc[0]]))
 
         # separating our requests so that we don't flood the website
@@ -162,7 +173,7 @@ def get_stats(current_data_year=0):
     if len(years) == 0:
         years = [end_year]
     past_matches, next_matches, history_matches = [], [], []
-    
+
     head_to_head_urls = set()
 
     # URL of the webpage that we are scraping the data from
@@ -175,7 +186,7 @@ def get_stats(current_data_year=0):
             # wait until table exists in DOM
             try:
                 WebDriverWait(driver, 20).until(
-                    EC.presence_of_element_located((By.CLASS_NAME, "stats_table"))
+                    EC.presence_of_element_located((By.CLASS_NAME, 'stats_table'))
                 )
                 time.sleep(2)
                 page_source = driver.page_source
@@ -207,13 +218,12 @@ def get_stats(current_data_year=0):
 
         # setting up the url for previous season to be read next
         previous_season = soup.select('a.prev')[0].get('href')
-        info_url = f"https://fbref.com{previous_season}"
+        info_url = f'https://fbref.com{previous_season}'
 
         (past_matches, new_matches,
          history_matches) = get_matches_stats(team_urls, year, past_matches,
                                               next_matches, history_matches,
                                               head_to_head_urls)
-
     return (past_matches, new_matches, history_matches)
 
 # setting up path to csv files and read them
@@ -230,51 +240,57 @@ if (os.path.exists(matches_csv_path) and os.path.exists(next_matches_csv_path)
         csv_all_matches = pd.read_csv(MATCHES_CSV_FILE, index_col=0).sort_values('Date', ascending=False)
         current_data_year = csv_all_matches.iloc[0]['Season']
         (new_matches, next_new_matches, history_new_matches) = get_stats(current_data_year)
-        new_matches = pd.concat(new_matches, ignore_index=True)
-        next_new_matches = pd.concat(next_new_matches, ignore_index=True)
-        history_new_matches = pd.concat(history_new_matches, ignore_index=True)
+        if new_matches:
+            new_matches = pd.concat(new_matches, ignore_index=True)
+            next_new_matches = pd.concat(next_new_matches, ignore_index=True)
+            # only adding the matches that are not already in the csv file
+            unique_keys = ['Date', 'Team', 'Opponent']
+            mask = ~new_matches.set_index(unique_keys).index.isin(csv_all_matches.set_index(unique_keys).index)
+            new_unique_matches = new_matches[mask]
 
-        # only adding the matches that are not already in the csv file
-        unique_keys = ['Date', 'Team', 'Opponent']
-        mask = ~new_matches.set_index(unique_keys).index.isin(csv_all_matches.set_index(unique_keys).index)
-        new_unique_matches = new_matches[mask]
+            new_dfs = [df for df in [new_unique_matches, csv_all_matches] if not df.empty]
+            match_df = pd.concat(new_dfs, ignore_index=True)
 
-        match_df = pd.concat([new_unique_matches, csv_all_matches], ignore_index=True)
+            # reading in the next matches data in the csv and adding new data
+            next_matches_df = pd.concat([next_new_matches], ignore_index=True)
+            # converting data into csv
+            match_df.to_csv(MATCHES_CSV_FILE)
+            next_matches_df.to_csv(NEXT_MATCHES_CSV_FILE)
 
-        # reading in the next matches data in the csv and adding new data
-        csv_next_matches = pd.read_csv(NEXT_MATCHES_CSV_FILE, index_col=0).sort_values('Date', ascending=False)
-        next_mask = ~next_new_matches.set_index(unique_keys).index.isin(csv_next_matches.set_index(unique_keys).index)
-        next_new_unique_matches = next_new_matches[next_mask]
+        if history_new_matches:
+            history_new_matches = pd.concat(history_new_matches, ignore_index=True)
+            # reading in the head-to-head matches data in the csv and adding new data
+            csv_history_matches = pd.read_csv(HISTORY_CSV_FILE, index_col=0).sort_values('Date', ascending=False)
 
-        next_matches_df = pd.concat([next_new_unique_matches, csv_next_matches], ignore_index=True)
+            history_new_matches['Match_key'] = history_new_matches.apply(
+                lambda row: tuple(sorted([row['Home'], row['Away']])), axis=1)
 
-        # reading in the head-to-head matches data in the csv and adding new data
-        csv_history_matches = pd.read_csv(HISTORY_CSV_FILE, index_col=0).sort_values('Date', ascending=False)
+            history_new_matches.drop_duplicates(subset=['Match_key', 'Date'], inplace=True)
+            history_new_matches.drop(columns=['Match_key', 'Match Report'], inplace=True)
 
-        history_new_matches['Match_key'] = history_new_matches.apply(
-            lambda row: tuple(sorted([row['Team'], row['Opponent']])), axis=1)
+            # only adding the matches that are not already in the csv file
+            unique_keys = ['Date', 'Home', 'Away', 'Comp']
+            history_mask = ~history_new_matches.set_index(unique_keys).index.isin(csv_history_matches.set_index(unique_keys).index)
+            history_new_unique_matches = history_new_matches[history_mask]
 
-        history_new_matches.drop_duplicates(subset=['Match_key', 'Date'])
-        history_new_matches.drop(columns=['Match_key'])
-
-        # only adding the matches that are not already in the csv file
-        unique_keys = ['Date', 'Home', 'Away', 'Comp']
-        history_mask = ~history_new_matches.set_index(unique_keys).index.isin(csv_history_matches.set_index(unique_keys).index)
-        history_new_unique_matches = history_new_matches[history_mask]
-
-        history_matches_df = pd.concat([history_new_unique_matches, csv_history_matches], ignore_index=True)
+            new_dfs = [df for df in [history_new_unique_matches, csv_history_matches] if not df.empty]
+            history_matches_df = pd.concat(new_dfs, ignore_index=True)
+            history_matches_df.to_csv(HISTORY_CSV_FILE)
     except pd.errors.EmptyDataError:
         (new_matches, next_new_matches, history_new_matches) = get_stats()
         match_df = pd.concat(new_matches, ignore_index=True)
         next_matches_df = pd.concat(next_new_matches, ignore_index=True)
         history_matches_df = pd.concat(history_new_matches, ignore_index=True)
+        # converting data into csv
+        match_df.to_csv(MATCHES_CSV_FILE)
+        next_matches_df.to_csv(NEXT_MATCHES_CSV_FILE)
+        history_matches_df.to_csv(HISTORY_CSV_FILE)
 else:
     (new_matches, next_new_matches, history_new_matches) = get_stats()
     match_df = pd.concat(new_matches, ignore_index=True)
     next_matches_df = pd.concat(next_new_matches, ignore_index=True)
     history_matches_df = pd.concat(history_new_matches, ignore_index=True)
-
-# converting data into csv
-match_df.to_csv(MATCHES_CSV_FILE)
-next_matches_df.to_csv(NEXT_MATCHES_CSV_FILE)
-history_matches_df.to_csv(HISTORY_CSV_FILE)
+    # converting data into csv
+    match_df.to_csv(MATCHES_CSV_FILE)
+    next_matches_df.to_csv(NEXT_MATCHES_CSV_FILE)
+    history_matches_df.to_csv(HISTORY_CSV_FILE)
