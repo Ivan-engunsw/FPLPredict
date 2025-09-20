@@ -25,7 +25,7 @@ def get_current_year():
     current_year = current_date.year
     return current_year
 
-LEAGUE = 'Premier League'
+LEAGUE = 'La Liga'
 # Total number of years of data wanted
 YEAR_DIFF = 4
 
@@ -76,8 +76,11 @@ def get_matches_stats(team_urls, year, all_matches, next_matches,
 
         past_week_matches_csv_path = os.path.join(os.getcwd(), NEXT_MATCHES_CSV_FILE)
         if os.path.exists(past_week_matches_csv_path):
-            past_week_matches_df = pd.read_csv(NEXT_MATCHES_CSV_FILE, index_col=0)
-            past_week_teams = set(list(past_week_matches_df['Team']))
+            try:
+                past_week_matches_df = pd.read_csv(NEXT_MATCHES_CSV_FILE, index_col=0)
+                past_week_teams = set(list(past_week_matches_df['Team']))
+            except pd.errors.EmptyDataError:
+                past_week_teams = set()
         else:
             past_week_teams = set()
 
@@ -98,8 +101,8 @@ def get_matches_stats(team_urls, year, all_matches, next_matches,
                 continue
             head_to_head_urls.add(head_to_head_history_url)
             
-            if (past_week_teams and team_name in past_week_teams
-                and opp_name.replace('-',' ') in past_week_teams):
+            if ((team_name in past_week_teams and opp_name.replace('-',' ') in past_week_teams)
+                or len(past_week_teams) == 0):
                 try:
                     (hth_matches, page_source) = read_data_with_retry(head_to_head_history_url, 
                                                     'games_history_all',
@@ -177,7 +180,11 @@ def get_stats(current_data_year=0):
     head_to_head_urls = set()
 
     # URL of the webpage that we are scraping the data from
-    info_url = 'https://fbref.com/en/comps/9/Premier-League-Stats'
+    if LEAGUE == 'Premier League':
+        info_url = 'https://fbref.com/en/comps/9/Premier-League-Stats'
+    elif LEAGUE == 'La Liga':
+        info_url = 'https://fbref.com/en/comps/12/La-Liga-Stats'
+
     for year in years:
         retries = 3
         for attempt in range(retries):
