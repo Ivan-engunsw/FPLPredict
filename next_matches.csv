@@ -1,21 +1,21 @@
 ,Date,Time,Comp,Round,Day,Venue,Result,GF,GA,Opponent,xG,xGA,Poss,Attendance,Captain,Formation,Opp Formation,Referee,Match Report,Notes,Season,Team
-0,2025-09-20,12:30 (21:30),Premier League,Matchweek 5,Sat,Home,,,,Everton,,,,,,,,,Head-to-Head,,2026,Liverpool
-1,2025-09-21,16:30 (01:30),Premier League,Matchweek 5,Sun,Home,,,,Manchester City,,,,,,,,,Head-to-Head,,2026,Arsenal
-2,2025-09-20,15:00 (00:00),Premier League,Matchweek 5,Sat,Away,,,,Brighton,,,,,,,,,Head-to-Head,,2026,Tottenham Hotspur
-3,2025-09-21,14:00 (23:00),Premier League,Matchweek 5,Sun,Home,,,,Newcastle Utd,,,,,,,,,Head-to-Head,,2026,Bournemouth
-4,2025-09-20,17:30 (02:30),Premier League,Matchweek 5,Sat,Away,,,,Manchester Utd,,,,,,,,,Head-to-Head,,2026,Chelsea
-5,2025-09-20,12:30 (21:30),Premier League,Matchweek 5,Sat,Away,,,,Liverpool,,,,,,,,,Head-to-Head,,2026,Everton
-6,2025-09-21,14:00 (23:00),Premier League,Matchweek 5,Sun,Home,,,,Aston Villa,,,,,,,,,Head-to-Head,,2026,Sunderland
-7,2025-09-21,16:30 (01:30),Premier League,Matchweek 5,Sun,Away,,,,Arsenal,,,,,,,,,Head-to-Head,,2026,Manchester City
-8,2025-09-20,15:00 (00:00),Premier League,Matchweek 5,Sat,Away,,,,West Ham,,,,,,,,,Head-to-Head,,2026,Crystal Palace
-9,2025-09-21,14:00 (23:00),Premier League,Matchweek 5,Sun,Away,,,,Bournemouth,,,,,,,,,Head-to-Head,,2026,Newcastle United
-10,2025-09-20,20:00 (05:00),Premier League,Matchweek 5,Sat,Home,,,,Brentford,,,,,,,,,Head-to-Head,,2026,Fulham
-11,2025-09-20,20:00 (05:00),Premier League,Matchweek 5,Sat,Away,,,,Fulham,,,,,,,,,Head-to-Head,,2026,Brentford
-12,2025-09-20,15:00 (00:00),Premier League,Matchweek 5,Sat,Home,,,,Tottenham,,,,,,,,,Head-to-Head,,2026,Brighton and Hove Albion
-13,2025-09-20,17:30 (02:30),Premier League,Matchweek 5,Sat,Home,,,,Chelsea,,,,,,,,,Head-to-Head,,2026,Manchester United
-14,2025-09-20,15:00 (00:00),Premier League,Matchweek 5,Sat,Away,,,,Burnley,,,,,,,,,Head-to-Head,,2026,Nottingham Forest
-15,2025-09-20,15:00 (00:00),Premier League,Matchweek 5,Sat,Away,,,,Wolves,,,,,,,,,Head-to-Head,,2026,Leeds United
-16,2025-09-20,15:00 (00:00),Premier League,Matchweek 5,Sat,Home,,,,Nott'ham Forest,,,,,,,,,Head-to-Head,,2026,Burnley
-17,2025-09-20,15:00 (00:00),Premier League,Matchweek 5,Sat,Home,,,,Crystal Palace,,,,,,,,,Head-to-Head,,2026,West Ham United
-18,2025-09-21,14:00 (23:00),Premier League,Matchweek 5,Sun,Away,,,,Sunderland,,,,,,,,,Head-to-Head,,2026,Aston Villa
-19,2025-09-20,15:00 (00:00),Premier League,Matchweek 5,Sat,Home,,,,Leeds United,,,,,,,,,Head-to-Head,,2026,Wolverhampton Wanderers
+0,2025-09-20,16:15 (00:15),La Liga,Matchweek 5,Sat,Home,,,,Espanyol,,,,,,,,,Head-to-Head,,2026,Real Madrid
+1,2025-09-21,21:00 (05:00),La Liga,Matchweek 5,Sun,Home,,,,Getafe,,,,,,,,,Head-to-Head,,2026,Barcelona
+2,2025-09-20,16:15 (00:15),La Liga,Matchweek 5,Sat,Away,,,,Real Madrid,,,,,,,,,Head-to-Head,,2026,Espanyol
+3,2025-09-28,21:00 (05:00),La Liga,Matchweek 7,Sun,Home,,,,Osasuna,,,,,,,,,Head-to-Head,,2026,Real Betis
+4,2025-09-20,21:00 (05:00),La Liga,Matchweek 5,Sat,Away,,,,Valencia,,,,,,,,,Head-to-Head,,2026,Athletic Club
+5,2025-09-21,21:00 (05:00),La Liga,Matchweek 5,Sun,Away,,,,Barcelona,,,,,,,,,Head-to-Head,,2026,Getafe
+6,2025-09-20,18:30 (02:30),La Liga,Matchweek 5,Sat,Home,,,,Osasuna,,,,,,,,,Head-to-Head,,2026,Villarreal
+7,2025-09-20,18:30 (02:30),La Liga,Matchweek 5,Sat,Home,,,,Sevilla,,,,,,,,,Head-to-Head,,2026,Alaves
+8,2025-09-21,18:30 (02:30),La Liga,Matchweek 5,Sun,Home,,,,Oviedo,,,,,,,,,Head-to-Head,,2026,Elche
+9,2025-09-20,18:30 (02:30),La Liga,Matchweek 5,Sat,Away,,,,Villarreal,,,,,,,,,Head-to-Head,,2026,Osasuna
+10,2025-09-21,16:15 (00:15),La Liga,Matchweek 5,Sun,Away,,,,Mallorca,,,,,,,,,Head-to-Head,,2026,Atletico Madrid
+11,2025-09-20,18:30 (02:30),La Liga,Matchweek 5,Sat,Away,,,,Alavés,,,,,,,,,Head-to-Head,,2026,Sevilla
+12,2025-09-21,14:00 (22:00),La Liga,Matchweek 5,Sun,Home,,,,Celta Vigo,,,,,,,,,Head-to-Head,,2026,Rayo Vallecano
+13,2025-09-21,14:00 (22:00),La Liga,Matchweek 5,Sun,Away,,,,Rayo Vallecano,,,,,,,,,Head-to-Head,,2026,Celta Vigo
+14,2025-09-20,21:00 (05:00),La Liga,Matchweek 5,Sat,Home,,,,Athletic Club,,,,,,,,,Head-to-Head,,2026,Valencia
+15,2025-09-21,18:30 (02:30),La Liga,Matchweek 5,Sun,Away,,,,Elche,,,,,,,,,Head-to-Head,,2026,Oviedo
+16,2025-09-24,21:30 (05:30),La Liga,Matchweek 6,Wed,Home,,,,Mallorca,,,,,,,,,Head-to-Head,,2026,Real Sociedad
+17,2025-09-20,14:00 (22:00),La Liga,Matchweek 5,Sat,Away,,,,Girona,,,,,,,,,Head-to-Head,,2026,Levante
+18,2025-09-21,16:15 (00:15),La Liga,Matchweek 5,Sun,Home,,,,Atlético Madrid,,,,,,,,,Head-to-Head,,2026,Mallorca
+19,2025-09-20,14:00 (22:00),La Liga,Matchweek 5,Sat,Home,,,,Levante,,,,,,,,,Head-to-Head,,2026,Girona
