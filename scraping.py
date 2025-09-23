@@ -25,7 +25,7 @@ def get_current_year():
     current_year = current_date.year
     return current_year
 
-LEAGUE = 'La Liga'
+LEAGUE = 'Premier League'
 # Total number of years of data wanted
 YEAR_DIFF = 4
 
